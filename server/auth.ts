@@ -1,8 +1,14 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 
-const JWT_SECRET = process.env.JWT_SECRET || process.env.SESSION_SECRET || "medilink-secret-key";
+const JWT_SECRET = process.env.JWT_SECRET || process.env.SESSION_SECRET;
 const JWT_EXPIRES_IN = "7d";
+
+if (!JWT_SECRET && process.env.NODE_ENV === "production") {
+  throw new Error("JWT_SECRET or SESSION_SECRET environment variable is required in production");
+}
+
+const SECRET = JWT_SECRET || "dev-secret-only-for-development";
 
 export function hashPassword(password) {
   return bcrypt.hashSync(password, 10);
@@ -13,12 +19,12 @@ export function comparePassword(password, hash) {
 }
 
 export function generateToken(payload) {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+  return jwt.sign(payload, SECRET, { expiresIn: JWT_EXPIRES_IN });
 }
 
 export function verifyToken(token) {
   try {
-    return jwt.verify(token, JWT_SECRET);
+    return jwt.verify(token, SECRET);
   } catch (error) {
     return null;
   }
